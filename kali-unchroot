@@ -17,7 +17,7 @@ fi
 
 cd "$TARGET_DIR"
 
-if grep -qs "$TARGET_DIR/proc/sys/fs/binfmt_misc" /proc/mounts; then
+if grep -qs "$TARGET_DIR/proc/sys/fs/binfmt_misc " /proc/mounts; then
     umount proc/sys/fs/binfmt_misc
 fi
 
