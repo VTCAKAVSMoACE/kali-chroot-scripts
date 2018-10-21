@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if ! [ $(id -u) = 0 ]; then
+    echo "The script need to be run as root." >&2
+    exit 1
+fi
+
+user=${SUDO_USER:-$(whoami)}
+
+architecture="$(dpkg --print-architecture)"
+TARGET_DIR="/media/$user/kali/kali-$architecture"
+
+if [ ! -d "$TARGET_DIR" ]; then
+    >&2 echo "Could not unchroot; $TARGET_DIR does not exist!"
+    exit
+fi
+
+cd "$TARGET_DIR"
+
+if grep -qs "$TARGET_DIR/proc/sys/fs/binfmt_misc" /proc/mounts; then
+    umount proc/sys/fs/binfmt_misc
+fi
+
+if grep -qs "$TARGET_DIR/proc " /proc/mounts; then
+    umount proc
+fi
+
+if grep -qs "$TARGET_DIR/dev/pts " /proc/mounts; then
+    umount dev/pts
+fi
+
+if grep -qs "$TARGET_DIR/dev " /proc/mounts; then
+    umount dev/
+fi
+
+if grep -qs "$TARGET_DIR/sys " /proc/mounts; then
+    umount sys
+fi
+
+if grep -qs "$TARGET_DIR/run/user/1000 " /proc/mounts; then
+    umount run/user/1000
+fi
+
+if grep -qs "$TARGET_DIR/run " /proc/mounts; then
+    umount run
+fi

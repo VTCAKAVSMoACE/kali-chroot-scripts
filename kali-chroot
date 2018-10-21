@@ -1,0 +1,49 @@
+#!/bin/bash
+
+if ! [ $(id -u) = 0 ]; then
+    echo "The script need to be run as root." >&2
+    exit 1
+fi
+
+user=${SUDO_USER:-$(whoami)}
+
+architecture="$(dpkg --print-architecture)"
+TARGET_DIR="/media/$user/kali/kali-$architecture"
+
+if [ ! -d "$TARGET_DIR" ]; then
+    >&2 echo "Could not chroot; $TARGET_DIR does not exist!"
+    exit 1
+fi
+
+cd "$TARGET_DIR"
+
+export MALLOC_CHECK_=0 # workaround for LP: #520465
+export LC_ALL=C
+export DEBIAN_FRONTEND=noninteractive
+export HOME=/root
+
+if ! grep -qs "$TARGET_DIR/proc " /proc/mounts; then
+    mount -t proc proc proc
+fi
+
+if ! grep -qs "$TARGET_DIR/dev " /proc/mounts; then
+    mount -o bind /dev/ dev/
+fi
+
+if ! grep -qs "$TARGET_DIR/dev/pts " /proc/mounts; then
+    mount -o bind /dev/pts dev/pts
+fi
+
+if ! grep -qs "$TARGET_DIR/sys " /proc/mounts; then
+    mount -o bind /sys sys
+fi
+
+if ! grep -qs "$TARGET_DIR/run " /proc/mounts; then
+    mount -o bind /run run
+fi
+
+if ! grep -qs "$TARGET_DIR/run/user/1000 " /proc/mounts; then
+    mount -o bind /run/user/1000 run/user/1000
+fi
+
+LANG=C chroot . "$@"
