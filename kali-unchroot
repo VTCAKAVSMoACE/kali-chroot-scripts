@@ -5,8 +5,10 @@ if ! [ $(id -u) = 0 ]; then
     exit 1
 fi
 
+user=${SUDO_USER:-$(whoami)}
 architecture="$(dpkg --print-architecture)"
-TARGET_DIR="/media/vtcakavsmoace/kali/kali-$architecture"
+
+TARGET_DIR="/media/$user/kali/kali-$architecture"
 
 if [ ! -d "$TARGET_DIR" ]; then
     >&2 echo "Could not unchroot; $TARGET_DIR does not exist!"
@@ -15,34 +17,4 @@ fi
 
 cd "$TARGET_DIR"
 
-if grep -qs "$TARGET_DIR/proc/sys/fs/binfmt_misc " /proc/mounts; then
-    umount proc/sys/fs/binfmt_misc
-fi
-
-if grep -qs "$TARGET_DIR/proc " /proc/mounts; then
-    umount proc
-fi
-
-if grep -qs "$TARGET_DIR/dev/pts " /proc/mounts; then
-    umount dev/pts
-fi
-
-if grep -qs "$TARGET_DIR/dev " /proc/mounts; then
-    umount dev/
-fi
-
-if grep -qs "$TARGET_DIR/sys " /proc/mounts; then
-    umount sys
-fi
-
-if grep -qs "$TARGET_DIR/run/user/1000 " /proc/mounts; then
-    umount run/user/1000
-fi
-
-if grep -qs "$TARGET_DIR/run/snapd/ns " /proc/mounts; then
-    umount run/snapd/ns
-fi
-
-if grep -qs "$TARGET_DIR/run " /proc/mounts; then
-    umount run
-fi
+mount | awk '{print $3}' | awk '{ print length, $0 }' | sort -n -s | cut -d" " -f2- | grep "^$TARGET_DIR" | tac | sudo xargs umount
